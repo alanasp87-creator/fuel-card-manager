@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Create account — Fuel</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/site.css" />
+  </head>
+  <body>
+    <div class="grain" aria-hidden="true"></div>
+    <div class="auth-page">
+      <div class="auth-card">
+        <p class="auth-brand"><a href="index.html">Fuel</a></p>
+        <h1>Create account</h1>
+        <p class="auth-card__lead">
+          Password must be at least 8 characters. For local development only —
+          swap in a real identity provider for production.
+        </p>
+        <p id="auth-error" class="auth-error" role="alert"></p>
+        <form id="signup-form" novalidate>
+          <div class="auth-field">
+            <label for="signup-name">Your name</label>
+            <input
+              id="signup-name"
+              name="name"
+              type="text"
+              autocomplete="name"
+            />
+          </div>
+          <div class="auth-field">
+            <label for="signup-email">Email</label>
+            <input
+              id="signup-email"
+              name="email"
+              type="email"
+              autocomplete="email"
+              required
+            />
+          </div>
+          <div class="auth-field">
+            <label for="signup-password">Password</label>
+            <input
+              id="signup-password"
+              name="password"
+              type="password"
+              autocomplete="new-password"
+              required
+              minlength="8"
+            />
+          </div>
+          <button type="submit" class="btn btn-primary">Create account</button>
+          <button type="button" class="btn btn-ghost auth-card__dev-skip" id="signup-dev-skip" hidden>
+            Skip sign-in (dev only)
+          </button>
+        </form>
+        <p class="auth-footer">
+          Already have an account? <a href="login.html">Sign in</a>
+          · <a href="index.html">Home</a>
+        </p>
+      </div>
+    </div>
+    <script src="js/api-config.js"></script>
+    <script src="js/auth-client.js"></script>
+    <script src="js/dev-menu.js" defer></script>
+    <script>
+      (function () {
+        function params() {
+          return new URLSearchParams(location.search);
+        }
+        function showErr(el, msg) {
+          if (!msg) {
+            el.classList.remove("is-visible");
+            el.textContent = "";
+            return;
+          }
+          el.textContent = msg;
+          el.classList.add("is-visible");
+        }
+        document.addEventListener("DOMContentLoaded", function () {
+          var form = document.getElementById("signup-form");
+          var err = document.getElementById("auth-error");
+          var skip = document.getElementById("signup-dev-skip");
+          if (window.FUEL_SHOW_DEV_MENU && window.FuelAuth && typeof window.FuelAuth.devBypass === "function" && skip) {
+            skip.hidden = false;
+            skip.addEventListener("click", function () {
+              showErr(err, "");
+              skip.disabled = true;
+              window.FuelAuth.devBypass()
+                .then(function () {
+                  location.href = params().get("return") || "app.html";
+                })
+                .catch(function (ex) {
+                  showErr(err, ex.message || "Dev sign-in failed");
+                })
+                .finally(function () {
+                  skip.disabled = false;
+                });
+            });
+          }
+          if (window.FuelAuth && window.FuelAuth.getToken()) {
+            window.FuelAuth.me().then(function (u) {
+              if (u) location.replace(params().get("return") || "app.html");
+            });
+          }
+          form.addEventListener("submit", function (e) {
+            e.preventDefault();
+            showErr(err, "");
+            var name = document.getElementById("signup-name").value.trim();
+            var email = document.getElementById("signup-email").value.trim();
+            var password = document.getElementById("signup-password").value;
+            if (password.length < 8) {
+              showErr(err, "Password must be at least 8 characters.");
+              return;
+            }
+            window.FuelAuth.register(email, password, name)
+              .then(function () {
+                location.href = params().get("return") || "app.html";
+              })
+              .catch(function (ex) {
+                showErr(err, ex.message || "Sign up failed");
+              });
+          });
+        });
+      })();
+    </script>
+  </body>
+</html>
