@@ -1,0 +1,20 @@
+{
+  "name": "fuel-get-api",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "start": "node server.mjs",
+    "verify-fuel-finder": "node scripts/verify-fuel-finder.mjs",
+    "refresh-snapshot": "node scripts/refresh-fuel-snapshot.mjs",
+    "sync-fuel-stations": "node scripts/sync-fuel-stations.mjs"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.100.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.2"
+  }
+}
