@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>My Price Trend — Fuel</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/site.css?v=2" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+      .trend-page {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem 1rem;
+        font-family: Manrope, sans-serif;
+      }
+      .trend-header {
+        margin-bottom: 2rem;
+      }
+      .trend-header h1 {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+      }
+      .trend-header p {
+        color: #666;
+        margin: 0;
+      }
+      .trend-controls {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      .trend-controls button {
+        padding: 0.75rem 1rem;
+        border: 1px solid #ddd;
+        border-radius: 0.5rem;
+        font-size: 1rem;
+        background: #5b5bff;
+        color: white;
+        border: none;
+        cursor: pointer;
+      }
+      .trend-controls button:hover {
+        background: #4a4ae6;
+      }
+      .legend-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+      }
+      .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.9rem;
+        color: #444;
+      }
+      .legend-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        flex-shrink: 0;
+      }
+      .trend-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 1rem;
+        background: white;
+        border-radius: 0.5rem;
+        overflow: hidden;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        font-size: 0.95rem;
+      }
+      .trend-table th {
+        background: #f5f5f5;
+        padding: 0.9rem 1rem;
+        text-align: left;
+        font-weight: 600;
+        border-bottom: 2px solid #ddd;
+        white-space: nowrap;
+      }
+      .trend-table td {
+        padding: 0.85rem 1rem;
+        border-bottom: 1px solid #eee;
+      }
+      .trend-table tbody tr:hover {
+        background: #fafafa;
+      }
+      .price-cell {
+        font-weight: 500;
+        color: #333;
+      }
+      .empty-state {
+        text-align: center;
+        padding: 4rem 1rem;
+        color: #666;
+        background: white;
+        border-radius: 0.75rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.07);
+      }
+      .empty-state h2 {
+        font-size: 1.3rem;
+        margin-bottom: 0.75rem;
+        color: #333;
+      }
+      .empty-state p {
+        font-size: 1rem;
+        line-height: 1.6;
+        margin: 0;
+      }
+      .loading {
+        text-align: center;
+        padding: 2rem;
+        color: #666;
+      }
+      .error-banner {
+        background: #fee;
+        border: 1px solid #fcc;
+        color: #c33;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        margin-bottom: 1rem;
+      }
+      .back-link {
+        display: inline-block;
+        margin-bottom: 1rem;
+        color: #5b5bff;
+        text-decoration: none;
+        font-weight: 500;
+      }
+      .back-link:hover {
+        text-decoration: underline;
+      }
+      .chart-section {
+        background: white;
+        border-radius: 0.75rem;
+        padding: 1.5rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.07);
+        margin-bottom: 2rem;
+      }
+      .chart-section h2 {
+        font-size: 1.3rem;
+        margin-bottom: 0.5rem;
+      }
+      .chart-subtitle {
+        color: #666;
+        font-size: 0.9rem;
+        margin-bottom: 1.5rem;
+      }
+      .info-strip {
+        background: #f0f0ff;
+        border: 1px solid #dde;
+        border-radius: 0.5rem;
+        padding: 0.75rem 1rem;
+        margin-bottom: 1.5rem;
+        font-size: 0.9rem;
+        color: #555;
+      }
+    </style>
+  </head>
+  <body style="background: #fafafa">
+    <div class="trend-page">
+      <a href="app.html" class="back-link">← Back to Dashboard</a>
+
+      <div class="trend-header">
+        <h1>My Price Trend</h1>
+        <p>Daily snapshot: your price vs local market and England average</p>
+      </div>
+
+      <div id="error-banner" class="error-banner" style="display: none;"></div>
+
+      <div class="trend-controls">
+        <button onclick="location.reload()">Refresh</button>
+      </div>
+
+      <div id="loading" class="loading">Loading price trend data...</div>
+
+      <div id="content" style="display: none;">
+        <div class="info-strip">
+          Data is captured automatically each time the GOV.UK Fuel Finder API refreshes (up to 4&times; daily).
+        </div>
+
+        <div class="chart-section">
+          <h2>Price Trend</h2>
+          <p class="chart-subtitle">All prices in pence per litre (p/L)</p>
+          <div class="legend-grid" id="legendGrid"></div>
+          <canvas id="trendChart" style="max-height: 420px;"></canvas>
+        </div>
+
+        <h2 style="margin-bottom: 1rem; font-size: 1.3rem;">Daily Snapshots</h2>
+        <table class="trend-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th style="color: #5b5bff;">Your Price</th>
+              <th style="color: #22a06b;">Local Avg</th>
+              <th style="color: #00a8a8;">Local Min</th>
+              <th style="color: #e53935;">Local Max</th>
+              <th style="color: #e67e22;">England Avg</th>
+              <th style="color: #f5a623;">England Min</th>
+              <th style="color: #d0021b;">England Max</th>
+            </tr>
+          </thead>
+          <tbody id="trendBody"></tbody>
+        </table>
+      </div>
+
+      <div id="empty" style="display: none;">
+        <div class="empty-state">
+          <h2>No trend data yet</h2>
+          <p>
+            Your price trend will appear here automatically after the next GOV.UK Fuel Finder API refresh.<br />
+            Make sure you have a postcode set in your dashboard settings and at least one fuel card price entered.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <script src="js/api-config.js"></script>
+    <script src="js/auth-client.js"></script>
+    <script>
+      (function () {
+        "use strict";
+
+        const errorBanner = document.getElementById("error-banner");
+        const loadingEl = document.getElementById("loading");
+        const contentEl = document.getElementById("content");
+        const emptyEl = document.getElementById("empty");
+        const trendBody = document.getElementById("trendBody");
+        const legendGrid = document.getElementById("legendGrid");
+        let chart = null;
+
+        const CORE_DATASETS = [
+          { key: "localAvg",   label: "Local Avg",    color: "#22a06b" },
+          { key: "localMin",   label: "Local Min",    color: "#00a8a8" },
+          { key: "localMax",   label: "Local Max",    color: "#e53935" },
+          { key: "englandAvg", label: "England Avg",  color: "#e67e22" },
+          { key: "englandMin", label: "England Min",  color: "#f5a623" },
+          { key: "englandMax", label: "England Max",  color: "#d0021b" },
+        ];
+        
+        const CARD_COLORS = ["#5b5bff", "#ff6b5b", "#6b5bff", "#5bffb0"];
+        let cardDatasets = [];
+
+        function showError(msg) {
+          errorBanner.textContent = msg;
+          errorBanner.style.display = "block";
+          loadingEl.style.display = "none";
+          contentEl.style.display = "none";
+          emptyEl.style.display = "none";
+        }
+
+        function fmt(p) {
+          if (p === undefined || p === null) return "—";
+          return typeof p === "number" ? p.toFixed(1) + "p" : "—";
+        }
+
+        function formatDate(dateStr) {
+          try {
+            const d = new Date(dateStr + "T00:00:00Z");
+            return d.toLocaleDateString("en-GB", {
+              weekday: "short",
+              year: "numeric",
+              month: "short",
+              day: "numeric",
+            });
+          } catch {
+            return dateStr;
+          }
+        }
+
+        function buildLegend() {
+          legendGrid.innerHTML = "";
+          cardDatasets.forEach(({ label, color }) => {
+            const item = document.createElement("div");
+            item.className = "legend-item";
+            item.innerHTML = `<span class="legend-dot" style="background:${color};"></span> ${label}`;
+            legendGrid.appendChild(item);
+          });
+          CORE_DATASETS.forEach(({ label, color }) => {
+            const item = document.createElement("div");
+            item.className = "legend-item";
+            item.innerHTML = `<span class="legend-dot" style="background:${color};"></span> ${label}`;
+            legendGrid.appendChild(item);
+          });
+        }
+
+        function buildChart(history) {
+          const sorted = history.slice().sort((a, b) => a.date.localeCompare(b.date));
+          const labels = sorted.map((d) => formatDate(d.date));
+
+          // Extract all unique cards from history
+          const cardMap = new Map();
+          sorted.forEach((entry) => {
+            const cards = Array.isArray(entry.userCardPrices) ? entry.userCardPrices : [];
+            cards.forEach(({ cardId, label }) => {
+              if (!cardMap.has(cardId)) cardMap.set(cardId, label);
+            });
+          });
+
+          // Build card datasets
+          cardDatasets = Array.from(cardMap.entries()).map(([cardId, label], idx) => ({
+            cardId,
+            label,
+            color: CARD_COLORS[idx % CARD_COLORS.length],
+          }));
+
+          const datasets = cardDatasets.map(({ cardId, label, color }) => {
+            const ds = {
+              label,
+              data: sorted.map((d) => {
+                const cards = Array.isArray(d.userCardPrices) ? d.userCardPrices : [];
+                const card = cards.find((c) => c.cardId === cardId);
+                return card?.price != null ? Number(card.price) : null;
+              }),
+              borderColor: color,
+              backgroundColor: color + "18",
+              tension: 0.25,
+              fill: false,
+              pointRadius: 4,
+              pointHoverRadius: 6,
+              spanGaps: true,
+              borderDash: [5, 5],
+            };
+            return ds;
+          });
+
+          // Add core datasets
+          const coreDatasets = CORE_DATASETS.map(({ key, label, color }) => ({
+            label,
+            data: sorted.map((d) => (d[key] != null ? Number(d[key]) : null)),
+            borderColor: color,
+            backgroundColor: color + "18",
+            tension: 0.25,
+            fill: false,
+            pointRadius: 4,
+            pointHoverRadius: 6,
+            spanGaps: true,
+          }));
+
+          const allDatasets = [...datasets, ...coreDatasets];
+
+          const canvas = document.getElementById("trendChart");
+          if (chart) chart.destroy();
+          chart = new Chart(canvas, {
+            type: "line",
+            data: { labels, datasets: allDatasets },
+            options: {
+              responsive: true,
+              maintainAspectRatio: true,
+              interaction: { mode: "index", intersect: false },
+              plugins: {
+                legend: { display: false },
+                tooltip: {
+                  callbacks: {
+                    label: (ctx) => {
+                      const v = ctx.parsed.y;
+                      return ` ${ctx.dataset.label}: ${v != null ? v.toFixed(1) + "p" : "—"}`;
+                    },
+                  },
+                },
+              },
+              scales: {
+                y: {
+                  beginAtZero: false,
+                  title: { display: true, text: "Price (pence/litre)" },
+                  ticks: {
+                    callback: (v) => v.toFixed(0) + "p",
+                  },
+                },
+              },
+            },
+          });
+        }
+
+        function buildTable(history) {
+          const sorted = history.slice().sort((a, b) => b.date.localeCompare(a.date));
+          trendBody.innerHTML = "";
+          sorted.forEach((entry) => {
+            const row = document.createElement("tr");
+            const cards = Array.isArray(entry.userCardPrices) ? entry.userCardPrices : [];
+            const cardPrices = cards.map((c) => `${c.label}: ${fmt(c.price)}`).join(", ");
+            row.innerHTML = `
+              <td>${formatDate(entry.date)}</td>
+              <td class="price-cell" style="color:#5b5bff;">${cardPrices || "—"}</td>
+              <td class="price-cell" style="color:#22a06b;">${fmt(entry.localAvg)}</td>
+              <td class="price-cell" style="color:#00a8a8;">${fmt(entry.localMin)}</td>
+              <td class="price-cell" style="color:#e53935;">${fmt(entry.localMax)}</td>
+              <td class="price-cell" style="color:#e67e22;">${fmt(entry.englandAvg)}</td>
+              <td class="price-cell" style="color:#f5a623;">${fmt(entry.englandMin)}</td>
+              <td class="price-cell" style="color:#d0021b;">${fmt(entry.englandMax)}</td>
+            `;
+            trendBody.appendChild(row);
+          });
+        }
+
+        async function loadTrend() {
+          try {
+            loadingEl.style.display = "block";
+            contentEl.style.display = "none";
+            emptyEl.style.display = "none";
+            errorBanner.style.display = "none";
+
+            const user = await window.FuelAuth.me();
+            if (!user) {
+              location.replace("login.html?return=" + encodeURIComponent(location.pathname));
+              return;
+            }
+
+            const base = String(window.FUEL_FINDER_PROXY_BASE || "").replace(/\/$/, "");
+            const token = window.FuelAuth.getToken();
+            const res = await fetch(base + "/webhooks/user-price-history/history?userId=" + user.id, {
+              headers: token ? { Authorization: "Bearer " + token } : {},
+            });
+            const data = await res.json();
+
+            if (!res.ok) {
+              showError(data.error || "Failed to load price trend data");
+              return;
+            }
+
+            const history = data.data || [];
+            loadingEl.style.display = "none";
+
+            if (history.length === 0) {
+              emptyEl.style.display = "block";
+              return;
+            }
+
+            buildLegend();
+            buildChart(history);
+            buildTable(history);
+            contentEl.style.display = "block";
+          } catch (err) {
+            showError(err.message || "Failed to load price trend data");
+          }
+        }
+
+        document.addEventListener("DOMContentLoaded", loadTrend);
+      })();
+    </script>
+  </body>
+</html>
