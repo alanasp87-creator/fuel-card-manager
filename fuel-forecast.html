@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Fuel Forecast — Fuel</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/site.css?v=2" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+      .forecast-page {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem 1rem;
+        font-family: Manrope, sans-serif;
+      }
+      .forecast-header {
+        margin-bottom: 2rem;
+      }
+      .forecast-header h1 {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+      }
+      .forecast-header p {
+        color: #666;
+        margin: 0;
+      }
+      .back-link {
+        display: inline-block;
+        margin-bottom: 1rem;
+        color: #5b5bff;
+        text-decoration: none;
+        font-weight: 500;
+      }
+      .back-link:hover {
+        text-decoration: underline;
+      }
+      .loading {
+        text-align: center;
+        padding: 2rem;
+        color: #666;
+      }
+      .error-banner {
+        background: #fee;
+        border: 1px solid #fcc;
+        color: #c33;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        margin-bottom: 1rem;
+      }
+      .signal-card {
+        border-radius: 0.75rem;
+        padding: 1.5rem 2rem;
+        margin-bottom: 2rem;
+        display: flex;
+        align-items: flex-start;
+        gap: 1.5rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      }
+      .signal-card--up {
+        background: linear-gradient(135deg, #fff5f5 0%, #ffe0e0 100%);
+        border: 1px solid #fcc;
+      }
+      .signal-card--down {
+        background: linear-gradient(135deg, #f0fff4 0%, #d4f7e0 100%);
+        border: 1px solid #b7e6c9;
+      }
+      .signal-card--stable {
+        background: linear-gradient(135deg, #f0f0ff 0%, #e0e0ff 100%);
+        border: 1px solid #ccd;
+      }
+      .signal-icon {
+        font-size: 3rem;
+        line-height: 1;
+        flex-shrink: 0;
+      }
+      .signal-body {
+        flex: 1;
+      }
+      .signal-direction {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-bottom: 0.25rem;
+      }
+      .signal-confidence {
+        font-size: 0.85rem;
+        color: #666;
+        margin-bottom: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+      .signal-explanation {
+        font-size: 1rem;
+        line-height: 1.6;
+        color: #333;
+      }
+      .recommendation-card {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 1rem 1.5rem;
+        border-radius: 0.75rem;
+        font-size: 1.2rem;
+        font-weight: 700;
+        margin-bottom: 2rem;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+      }
+      .recommendation-card--buy {
+        background: #e53935;
+        color: white;
+      }
+      .recommendation-card--wait {
+        background: #22a06b;
+        color: white;
+      }
+      .recommendation-card--hold {
+        background: #5b5bff;
+        color: white;
+      }
+      .metrics-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+      }
+      .metric-card {
+        background: white;
+        border-radius: 0.75rem;
+        padding: 1.25rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.07);
+        text-align: center;
+      }
+      .metric-card__label {
+        font-size: 0.85rem;
+        color: #666;
+        margin-bottom: 0.5rem;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+      }
+      .metric-card__value {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: #222;
+      }
+      .metric-card__sub {
+        font-size: 0.8rem;
+        color: #999;
+        margin-top: 0.25rem;
+      }
+      .chart-section {
+        background: white;
+        border-radius: 0.75rem;
+        padding: 1.5rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.07);
+        margin-bottom: 2rem;
+      }
+      .chart-section h2 {
+        font-size: 1.3rem;
+        margin-bottom: 0.5rem;
+      }
+      .chart-subtitle {
+        color: #666;
+        font-size: 0.9rem;
+        margin-bottom: 1.5rem;
+      }
+      .legend-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin-bottom: 1rem;
+      }
+      .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.9rem;
+        color: #444;
+      }
+      .legend-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        flex-shrink: 0;
+      }
+      .info-strip {
+        background: #f0f0ff;
+        border: 1px solid #dde;
+        border-radius: 0.5rem;
+        padding: 0.75rem 1rem;
+        margin-bottom: 1.5rem;
+        font-size: 0.9rem;
+        color: #555;
+      }
+      .forecast-controls {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      .forecast-controls button {
+        padding: 0.75rem 1rem;
+        border-radius: 0.5rem;
+        font-size: 1rem;
+        background: #5b5bff;
+        color: white;
+        border: none;
+        cursor: pointer;
+      }
+      .forecast-controls button:hover {
+        background: #4a4ae6;
+      }
+      .empty-state {
+        text-align: center;
+        padding: 4rem 1rem;
+        color: #666;
+        background: white;
+        border-radius: 0.75rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.07);
+      }
+      .empty-state h2 {
+        font-size: 1.3rem;
+        margin-bottom: 0.75rem;
+        color: #333;
+      }
+      .change-up { color: #e53935; }
+      .change-down { color: #22a06b; }
+      .change-flat { color: #666; }
+    </style>
+  </head>
+  <body style="background: #fafafa">
+    <div class="forecast-page">
+      <a href="app.html" class="back-link">&larr; Back to Fuel Snapshot</a>
+
+      <div class="forecast-header">
+        <h1>Fuel Price Forecast</h1>
+        <p>Brent crude oil vs UK diesel pump prices &mdash; predicting upcoming price movements</p>
+      </div>
+
+      <div id="error-banner" class="error-banner" style="display: none;"></div>
+
+      <div class="forecast-controls">
+        <button onclick="location.reload()">Refresh</button>
+      </div>
+
+      <div id="loading" class="loading">Generating forecast...</div>
+
+      <div id="content" style="display: none;">
+        <div id="signal-card" class="signal-card signal-card--stable">
+          <div class="signal-icon" id="signal-icon">&#9680;</div>
+          <div class="signal-body">
+            <div class="signal-direction" id="signal-direction">Analysing...</div>
+            <div class="signal-confidence" id="signal-confidence"></div>
+            <div class="signal-explanation" id="signal-explanation"></div>
+          </div>
+        </div>
+
+        <div id="recommendation-card" class="recommendation-card recommendation-card--hold">
+          <span id="rec-icon">&#9679;</span>
+          <span id="rec-text">Hold</span>
+        </div>
+
+        <div class="metrics-row">
+          <div class="metric-card">
+            <div class="metric-card__label">Brent Crude</div>
+            <div class="metric-card__value" id="metric-crude">--</div>
+            <div class="metric-card__sub" id="metric-crude-sub">$/barrel</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-card__label">Crude as p/litre</div>
+            <div class="metric-card__value" id="metric-crude-ppl">--</div>
+            <div class="metric-card__sub">raw material cost</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-card__label">UK Diesel Avg</div>
+            <div class="metric-card__value" id="metric-pump">--</div>
+            <div class="metric-card__sub">p/litre at pump</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-card__label">Spread</div>
+            <div class="metric-card__value" id="metric-spread">--</div>
+            <div class="metric-card__sub" id="metric-spread-sub">pump - crude</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-card__label">7-Day Change</div>
+            <div class="metric-card__value" id="metric-change7d">--</div>
+            <div class="metric-card__sub">crude movement</div>
+          </div>
+        </div>
+
+        <div class="chart-section">
+          <h2>Brent Crude vs UK Diesel Price</h2>
+          <p class="chart-subtitle">Crude oil converted to p/litre to compare with pump price. Pump prices typically lag crude by 1-4 weeks.</p>
+          <div class="legend-grid">
+            <div class="legend-item">
+              <span class="legend-dot" style="background: #e67e22;"></span> Brent Crude (p/L)
+            </div>
+            <div class="legend-item">
+              <span class="legend-dot" style="background: #5b5bff;"></span> UK Diesel Avg (p/L)
+            </div>
+          </div>
+          <canvas id="forecastChart" style="max-height: 420px;"></canvas>
+        </div>
+
+        <div class="info-strip" id="info-strip">
+          Crude oil price data is refreshed alongside the GOV.UK fuel snapshot (up to 4&times; daily).
+          The forecast uses a spread-and-lag heuristic comparing wholesale crude cost movements against retail pump price trends.
+          This is not financial advice.
+        </div>
+      </div>
+
+      <div id="empty" style="display: none;">
+        <div class="empty-state">
+          <h2>Forecast unavailable</h2>
+          <p>
+            Not enough data to generate a forecast yet. The system needs at least 5 days of Brent crude price data.<br />
+            Data is captured automatically &mdash; check back soon.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <script src="js/api-config.js"></script>
+    <script src="js/auth-client.js"></script>
+    <script>
+      (function () {
+        "use strict";
+
+        var errorBanner = document.getElementById("error-banner");
+        var loadingEl = document.getElementById("loading");
+        var contentEl = document.getElementById("content");
+        var emptyEl = document.getElementById("empty");
+        var chart = null;
+
+        function showError(msg) {
+          errorBanner.textContent = msg;
+          errorBanner.style.display = "block";
+          loadingEl.style.display = "none";
+          contentEl.style.display = "none";
+          emptyEl.style.display = "none";
+        }
+
+        function formatDate(dateStr) {
+          try {
+            var d = new Date(dateStr + "T00:00:00Z");
+            return d.toLocaleDateString("en-GB", {
+              day: "numeric",
+              month: "short",
+            });
+          } catch (e) {
+            return dateStr;
+          }
+        }
+
+        function renderSignal(data) {
+          var card = document.getElementById("signal-card");
+          var icon = document.getElementById("signal-icon");
+          var dir = document.getElementById("signal-direction");
+          var conf = document.getElementById("signal-confidence");
+          var expl = document.getElementById("signal-explanation");
+
+          card.className = "signal-card";
+          if (data.direction === "up") {
+            card.classList.add("signal-card--up");
+            icon.innerHTML = "&#9650;";
+            dir.textContent = "Price Rise Likely";
+          } else if (data.direction === "down") {
+            card.classList.add("signal-card--down");
+            icon.innerHTML = "&#9660;";
+            dir.textContent = "Price Drop Likely";
+          } else {
+            card.classList.add("signal-card--stable");
+            icon.innerHTML = "&#9679;";
+            dir.textContent = "Stable";
+          }
+
+          conf.textContent = data.confidence + " confidence";
+          expl.textContent = data.explanation;
+        }
+
+        function renderRecommendation(data) {
+          var card = document.getElementById("recommendation-card");
+          var recIcon = document.getElementById("rec-icon");
+          var recText = document.getElementById("rec-text");
+
+          card.className = "recommendation-card";
+          if (data.recommendation === "Buy Now") {
+            card.classList.add("recommendation-card--buy");
+            recIcon.innerHTML = "&#9660;";
+            recText.textContent = "Fill Up Now — prices may rise soon";
+          } else if (data.recommendation === "Wait") {
+            card.classList.add("recommendation-card--wait");
+            recIcon.innerHTML = "&#9650;";
+            recText.textContent = "Wait — prices may drop soon";
+          } else {
+            card.classList.add("recommendation-card--hold");
+            recIcon.innerHTML = "&#9679;";
+            recText.textContent = "Hold — no significant change expected";
+          }
+        }
+
+        function renderMetrics(data) {
+          var crude = data.latestCrude;
+          if (crude) {
+            document.getElementById("metric-crude").textContent = "$" + crude.usdPerBarrel.toFixed(2);
+            document.getElementById("metric-crude-ppl").textContent = crude.pencePerLitre.toFixed(1) + "p";
+          }
+
+          if (data.pumpPrice != null) {
+            document.getElementById("metric-pump").textContent = data.pumpPrice.toFixed(1) + "p";
+          }
+
+          if (data.spread != null) {
+            document.getElementById("metric-spread").textContent = data.spread.toFixed(1) + "p";
+            if (data.avgSpread != null) {
+              document.getElementById("metric-spread-sub").textContent =
+                "avg spread: " + data.avgSpread.toFixed(1) + "p";
+            }
+          }
+
+          var change7d = data.crudeChange7d || 0;
+          var el = document.getElementById("metric-change7d");
+          el.textContent = (change7d >= 0 ? "+" : "") + change7d.toFixed(1) + "%";
+          if (change7d > 1) el.className = "metric-card__value change-up";
+          else if (change7d < -1) el.className = "metric-card__value change-down";
+          else el.className = "metric-card__value change-flat";
+        }
+
+        function renderChart(data) {
+          var crudeHistory = data.crudeHistory || [];
+          var pumpHistory = data.pumpHistory || [];
+          if (crudeHistory.length === 0) return;
+
+          var labels = crudeHistory.map(function (e) {
+            return formatDate(e.date);
+          });
+          var crudeData = crudeHistory.map(function (e) {
+            return e.pencePerLitre;
+          });
+
+          var pumpData = pumpHistory.map(function (e) {
+            return e.pumpPpl;
+          });
+          var hasPump = pumpData.some(function (v) { return v != null; });
+
+          var datasets = [
+            {
+              label: "Brent Crude (p/L)",
+              data: crudeData,
+              borderColor: "#e67e22",
+              backgroundColor: "rgba(230, 126, 34, 0.1)",
+              tension: 0.3,
+              fill: true,
+              pointRadius: 1,
+              pointHoverRadius: 4,
+              yAxisID: "y",
+            },
+          ];
+
+          if (hasPump) {
+            datasets.push({
+              label: "UK Diesel Avg (p/L)",
+              data: pumpData,
+              borderColor: "#5b5bff",
+              backgroundColor: "rgba(91, 91, 255, 0.08)",
+              tension: 0.3,
+              fill: false,
+              pointRadius: 1,
+              pointHoverRadius: 4,
+              borderWidth: 2,
+              spanGaps: true,
+              yAxisID: "y",
+            });
+          }
+
+          var canvas = document.getElementById("forecastChart");
+          if (chart) chart.destroy();
+
+          chart = new Chart(canvas, {
+            type: "line",
+            data: { labels: labels, datasets: datasets },
+            options: {
+              responsive: true,
+              maintainAspectRatio: true,
+              interaction: { mode: "index", intersect: false },
+              plugins: {
+                legend: { display: false },
+                tooltip: {
+                  callbacks: {
+                    label: function (ctx) {
+                      var v = ctx.parsed.y;
+                      return " " + ctx.dataset.label + ": " + (v != null ? v.toFixed(1) + "p" : "\u2014");
+                    },
+                  },
+                },
+              },
+              scales: {
+                y: {
+                  beginAtZero: false,
+                  title: { display: true, text: "Price (pence/litre)" },
+                  ticks: {
+                    callback: function (v) {
+                      return v.toFixed(0) + "p";
+                    },
+                  },
+                },
+              },
+            },
+          });
+        }
+
+        function renderDataQuality(data) {
+          var strip = document.getElementById("info-strip");
+          var q = data.dataQuality || "unknown";
+          var note = "";
+          if (q === "synthetic" || q === "synthetic-crude") {
+            note = " Data quality: crude prices are currently synthetic (estimated). Forecast accuracy improves with live data from GOV.UK Fuel Finder integration.";
+          } else if (q === "crude-only") {
+            note = " Data quality: pump price history is not yet available. Connect the GOV.UK Fuel Finder API to capture daily diesel prices for a richer chart.";
+          }
+          if (note) {
+            strip.textContent += note;
+          }
+        }
+
+        async function loadForecast() {
+          try {
+            loadingEl.style.display = "block";
+            contentEl.style.display = "none";
+            emptyEl.style.display = "none";
+            errorBanner.style.display = "none";
+
+            var user = await window.FuelAuth.me();
+            if (!user) {
+              location.replace("login.html?return=" + encodeURIComponent(location.pathname));
+              return;
+            }
+
+            var base = String(window.FUEL_FINDER_PROXY_BASE || "").replace(/\/$/, "");
+            var token = window.FuelAuth.getToken();
+            var res = await fetch(base + "/forecast", {
+              headers: token ? { Authorization: "Bearer " + token } : {},
+            });
+            var data = await res.json();
+
+            if (!res.ok) {
+              showError(data.error || "Failed to load forecast");
+              return;
+            }
+
+            loadingEl.style.display = "none";
+
+            if (data.signal === "insufficient_data") {
+              emptyEl.style.display = "block";
+              return;
+            }
+
+            renderSignal(data);
+            renderRecommendation(data);
+            renderMetrics(data);
+            renderChart(data);
+            renderDataQuality(data);
+            contentEl.style.display = "block";
+          } catch (err) {
+            showError(err.message || "Failed to load forecast");
+          }
+        }
+
+        document.addEventListener("DOMContentLoaded", loadForecast);
+      })();
+    </script>
+  </body>
+</html>
