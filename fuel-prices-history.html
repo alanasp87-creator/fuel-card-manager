@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Fuel Price History — Fuel</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/site.css?v=2" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+      .history-page {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem 1rem;
+        font-family: Manrope, sans-serif;
+      }
+      .history-header {
+        margin-bottom: 2rem;
+      }
+      .history-header h1 {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+      }
+      .history-controls {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+      }
+      .history-controls select,
+      .history-controls button {
+        padding: 0.75rem 1rem;
+        border: 1px solid #ddd;
+        border-radius: 0.5rem;
+        font-size: 1rem;
+        background: white;
+        cursor: pointer;
+      }
+      .history-controls button {
+        background: #5b5bff;
+        color: white;
+        border: none;
+      }
+      .history-controls button:hover {
+        background: #4a4ae6;
+      }
+      .history-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 1rem;
+        background: white;
+        border-radius: 0.5rem;
+        overflow: hidden;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      }
+      .history-table th {
+        background: #f5f5f5;
+        padding: 1rem;
+        text-align: left;
+        font-weight: 600;
+        border-bottom: 2px solid #ddd;
+      }
+      .history-table td {
+        padding: 1rem;
+        border-bottom: 1px solid #eee;
+      }
+      .history-table tbody tr:hover {
+        background: #fafafa;
+      }
+      .price-cell {
+        font-weight: 500;
+        color: #333;
+      }
+      .price-trend {
+        font-size: 0.9rem;
+        color: #666;
+      }
+      .empty-state {
+        text-align: center;
+        padding: 3rem 1rem;
+        color: #666;
+      }
+      .empty-state p {
+        font-size: 1.1rem;
+      }
+      .loading {
+        text-align: center;
+        padding: 2rem;
+        color: #666;
+      }
+      .error {
+        background: #fee;
+        border: 1px solid #fcc;
+        color: #c33;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        margin-bottom: 1rem;
+      }
+      .back-link {
+        display: inline-block;
+        margin-bottom: 1rem;
+        color: #5b5bff;
+        text-decoration: none;
+        font-weight: 500;
+      }
+      .back-link:hover {
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body style="background: #fafafa">
+    <div class="history-page">
+      <a href="app.html" class="back-link">← Back to Dashboard</a>
+      
+      <div class="history-header">
+        <h1>Fuel Price History</h1>
+        <p>View historical fuel card price data (daily snapshots)</p>
+      </div>
+
+      <div id="error" class="error" style="display: none;"></div>
+
+      <div class="history-controls">
+        <select id="cardSelect" style="display: none;">
+          <option value="">All Cards</option>
+        </select>
+        <button onclick="location.reload()">Refresh</button>
+        <button onclick="loadSampleData()" style="background: #666;">Load Sample Data</button>
+      </div>
+
+      <div id="loading" class="loading" style="display: none;">
+        Loading price history...
+      </div>
+
+      <div id="content" style="display: none;">
+        <div style="margin-bottom: 3rem;">
+          <h2 style="margin-bottom: 1rem; font-size: 1.5rem;">Diesel Price Trend</h2>
+          <canvas id="priceChart" style="max-height: 400px;"></canvas>
+        </div>
+
+        <h2 style="margin-bottom: 1rem; font-size: 1.5rem;">Price History</h2>
+        <table class="history-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Card</th>
+              <th>Diesel (p/L)</th>
+              <th>Petrol (p/L)</th>
+              <th>E10 (p/L)</th>
+            </tr>
+          </thead>
+          <tbody id="historyBody">
+          </tbody>
+        </table>
+      </div>
+
+      <div id="empty" class="empty-state" style="display: none;">
+        <p>No price history available yet.</p>
+        <p>Price history will appear here once data is received.</p>
+      </div>
+    </div>
+
+    <script src="js/api-config.js"></script>
+    <script src="js/auth-client.js"></script>
+    <script>
+      (function () {
+        "use strict";
+
+        const errorEl = document.getElementById("error");
+        const loadingEl = document.getElementById("loading");
+        const contentEl = document.getElementById("content");
+        const emptyEl = document.getElementById("empty");
+        const historyBody = document.getElementById("historyBody");
+        const cardSelect = document.getElementById("cardSelect");
+        let chart = null;
+
+        function showError(msg) {
+          errorEl.textContent = msg;
+          errorEl.style.display = "block";
+          loadingEl.style.display = "none";
+          contentEl.style.display = "none";
+          emptyEl.style.display = "none";
+        }
+
+        function formatPrice(p) {
+          if (p === undefined || p === null) return "—";
+          return typeof p === "number" ? p.toFixed(2) : "—";
+        }
+
+        function formatDate(dateStr) {
+          try {
+            const d = new Date(dateStr + "T00:00:00Z");
+            return d.toLocaleDateString("en-GB", {
+              weekday: "short",
+              year: "numeric",
+              month: "short",
+              day: "numeric",
+            });
+          } catch {
+            return dateStr;
+          }
+        }
+
+        async function loadHistory() {
+          try {
+            loadingEl.style.display = "block";
+            contentEl.style.display = "none";
+            emptyEl.style.display = "none";
+            errorEl.style.display = "none";
+
+            const user = await window.FuelAuth.me();
+            if (!user) {
+              location.replace("login.html?return=" + encodeURIComponent(location.pathname));
+              return;
+            }
+
+            const base = String(window.FUEL_FINDER_PROXY_BASE || "").replace(/\/$/, "");
+            const res = await fetch(base + "/webhooks/fuel-prices/history?userId=" + user.id);
+            const data = await res.json();
+
+            if (!res.ok) {
+              showError(data.error || "Failed to load price history");
+              return;
+            }
+
+            const { data: history = [] } = data;
+
+            if (!history || history.length === 0) {
+              loadingEl.style.display = "none";
+              emptyEl.style.display = "block";
+              return;
+            }
+
+            // Populate card filter
+            const cards = new Set(history.map((h) => h.card));
+            cardSelect.innerHTML = '<option value="">All Cards</option>';
+            cards.forEach((card) => {
+              const opt = document.createElement("option");
+              opt.value = card;
+              opt.textContent = card;
+              cardSelect.appendChild(opt);
+            });
+            if (cards.size > 0) {
+              cardSelect.style.display = "block";
+            }
+
+            // Extract diesel prices for chart
+            const dieselData = history
+              .filter((h) => h.prices?.diesel !== undefined)
+              .sort((a, b) => a.date.localeCompare(b.date));
+
+            // Render chart
+            if (dieselData.length > 0) {
+              const canvas = document.getElementById("priceChart");
+              if (chart) chart.destroy();
+              chart = new Chart(canvas, {
+                type: "line",
+                data: {
+                  labels: dieselData.map((d) => formatDate(d.date)),
+                  datasets: [
+                    {
+                      label: "Diesel Price (p/L)",
+                      data: dieselData.map((d) => d.prices.diesel),
+                      borderColor: "#5b5bff",
+                      backgroundColor: "rgba(91, 91, 255, 0.1)",
+                      tension: 0.1,
+                      fill: true,
+                      pointRadius: 4,
+                      pointHoverRadius: 6,
+                    },
+                  ],
+                },
+                options: {
+                  responsive: true,
+                  maintainAspectRatio: true,
+                  plugins: {
+                    legend: { display: true, position: "top" },
+                  },
+                  scales: {
+                    y: {
+                      beginAtZero: false,
+                      title: { display: true, text: "Price (pence/litre)" },
+                    },
+                  },
+                },
+              });
+            }
+
+            // Render table
+            historyBody.innerHTML = "";
+            history.forEach((entry) => {
+              const row = document.createElement("tr");
+              row.innerHTML = `
+                <td>${formatDate(entry.date)}</td>
+                <td>${entry.card}</td>
+                <td class="price-cell">${formatPrice(entry.prices?.diesel || entry.prices?.B7)}</td>
+                <td class="price-cell">${formatPrice(entry.prices?.petrol)}</td>
+                <td class="price-cell">${formatPrice(entry.prices?.e10)}</td>
+              `;
+              historyBody.appendChild(row);
+            });
+
+            loadingEl.style.display = "none";
+            contentEl.style.display = "block";
+          } catch (err) {
+            showError(err.message || "Failed to load price history");
+          }
+        }
+
+        cardSelect.addEventListener("change", function () {
+          const filtered = document.querySelectorAll("#historyBody tr");
+          const card = this.value;
+          filtered.forEach((row) => {
+            if (!card) {
+              row.style.display = "";
+            } else {
+              const cardCell = row.cells[1].textContent;
+              row.style.display = cardCell === card ? "" : "none";
+            }
+          });
+        });
+
+        window.loadSampleData = async function () {
+          try {
+            const user = await window.FuelAuth.me();
+            if (!user) {
+              showError("Please log in first");
+              return;
+            }
+
+            const base = String(window.FUEL_FINDER_PROXY_BASE || "").replace(/\/$/, "");
+            const sampleData = [
+              {date: "2025-07-29", diesel: 131.77},
+              {date: "2025-08-04", diesel: 134.30},
+              {date: "2025-08-11", diesel: 124.39},
+              {date: "2025-08-18", diesel: 134.30},
+              {date: "2025-08-25", diesel: 133.51},
+              {date: "2025-09-01", diesel: 133.86},
+              {date: "2025-09-08", diesel: 133.72},
+              {date: "2025-09-15", diesel: 133.81},
+              {date: "2025-09-22", diesel: 134.15},
+              {date: "2025-09-29", diesel: 134.36},
+              {date: "2025-10-06", diesel: 134.76},
+              {date: "2025-10-13", diesel: 134.81},
+              {date: "2025-10-20", diesel: 134.68},
+              {date: "2025-10-27", diesel: 134.40},
+              {date: "2025-11-03", diesel: 134.38},
+              {date: "2025-11-10", diesel: 134.65},
+              {date: "2025-11-17", diesel: 135.07},
+              {date: "2025-11-24", diesel: 136.07},
+              {date: "2025-12-01", diesel: 136.81},
+              {date: "2025-12-08", diesel: 136.88},
+              {date: "2025-12-15", diesel: 136.83},
+              {date: "2025-12-22", diesel: 136.23},
+              {date: "2025-12-29", diesel: 135.34},
+              {date: "2026-01-05", diesel: 134.90},
+              {date: "2026-01-12", diesel: 133.43},
+              {date: "2026-01-19", diesel: 132.64},
+              {date: "2026-01-26", diesel: 132.00},
+              {date: "2026-02-02", diesel: 131.62},
+              {date: "2026-02-09", diesel: 131.46},
+              {date: "2026-02-16", diesel: 131.60},
+              {date: "2026-02-23", diesel: 131.71},
+              {date: "2026-03-02", diesel: 132.14},
+              {date: "2026-03-09", diesel: 135.67},
+              {date: "2026-03-16", diesel: 140.28},
+              {date: "2026-03-23", diesel: 145.92},
+              {date: "2026-03-30", diesel: 148.78}
+            ];
+
+            const res = await fetch(base + "/webhooks/fuel-prices/import", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ userId: user.id, data: sampleData }),
+            });
+            const result = await res.json();
+            if (res.ok) {
+              loadHistory();
+            } else {
+              showError(result.error || "Import failed");
+            }
+          } catch (err) {
+            showError(err.message || "Failed to load sample data");
+          }
+        };
+
+        document.addEventListener("DOMContentLoaded", loadHistory);
+      })();
+    </script>
+  </body>
+</html>
