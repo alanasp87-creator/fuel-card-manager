@@ -1,0 +1,291 @@
+/* Light theme — default app shell stays dark; enable with <html data-app-theme="light"> */
+
+html[data-app-theme="light"] body.app-ui {
+  color-scheme: light;
+  --bg: #f3f6f9;
+  --bg-deep: #eaeff5;
+  --bg-elevated: rgba(255, 255, 255, 0.7);
+  --bg-card: rgba(255, 255, 255, 0.85);
+  --bg-muted: rgba(15, 23, 42, 0.04);
+  --surface: #ffffff;
+  --text: #0f172a;
+  --text-muted: #64748b;
+  --accent: #2563eb;
+  --accent-dim: #1d4ed8;
+  --accent-soft: rgba(37, 99, 235, 0.1);
+  --accent-glow: rgba(37, 99, 235, 0.25);
+  --accent-2: #8b5cf6;
+  --accent-2-soft: rgba(139, 92, 246, 0.12);
+  --on-accent: #ffffff;
+  --border: rgba(15, 23, 42, 0.08);
+  --border-bright: rgba(37, 99, 235, 0.3);
+  --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
+  background-color: var(--bg-deep);
+  background-image: radial-gradient(circle at 15% 50%, rgba(37, 99, 235, 0.08), transparent 25%),
+    radial-gradient(circle at 85% 30%, rgba(139, 92, 246, 0.08), transparent 25%),
+    linear-gradient(135deg, #f8fafc 0%, #eaeff5 100%);
+  background-attachment: fixed;
+  scrollbar-color: rgba(37, 99, 235, 0.4) rgba(0, 0, 0, 0.05);
+}
+
+html[data-app-theme="light"] body.app-ui .grain {
+  opacity: 0.035;
+  mix-blend-mode: multiply;
+}
+
+html[data-app-theme="light"] body.app-ui .btn-primary {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 50%, #6366f1 100%);
+  color: var(--on-accent);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3), 0 1px 0 rgba(255, 255, 255, 0.3) inset;
+  border-radius: 9999px; /* full pill for modern look */
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+html[data-app-theme="light"] body.app-ui .btn-primary:hover {
+  background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 50%, #818cf8 100%);
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.4), 0 1px 0 rgba(255, 255, 255, 0.4) inset;
+  transform: translateY(-1px);
+}
+
+html[data-app-theme="light"] body.app-ui .btn-ghost:hover {
+  background: rgba(13, 148, 136, 0.08);
+  color: var(--accent-dim);
+}
+
+html[data-app-theme="light"] body.app-ui .app-sidebar {
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.03);
+  border-right: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+html[data-app-theme="light"] body.app-ui .app-sidebar__brand a {
+  filter: drop-shadow(0 1px 2px rgba(15, 23, 42, 0.08));
+}
+
+html[data-app-theme="light"] body.app-ui .app-sidebar__brand a:hover {
+  filter: drop-shadow(0 2px 6px rgba(13, 148, 136, 0.25));
+}
+
+html[data-app-theme="light"] body.app-ui .app-topbar {
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.4) inset, 0 4px 24px rgba(0, 0, 0, 0.03);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+html[data-app-theme="light"] body.app-ui .app-admin-badge {
+  background: var(--accent-2-soft);
+  color: #4338ca;
+  border-color: rgba(79, 70, 229, 0.25);
+}
+
+html[data-app-theme="light"] body.app-ui .dash-panel {
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: var(--shadow-md), 0 0 0 1px rgba(255,255,255, 0.6) inset;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-radius: 24px;
+}
+
+html[data-app-theme="light"] body.app-ui .dash-panel::after {
+  display: none;
+}
+
+html[data-app-theme="light"] body.app-ui .dash-metric-card {
+  background: rgba(255, 255, 255, 0.65);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.7);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+html[data-app-theme="light"] body.app-ui .dash-metric-card--total {
+  border-color: rgba(37, 99, 235, 0.35);
+  box-shadow: 0 8px 24px rgba(37, 99, 235, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.95);
+  background: linear-gradient(135deg, rgba(255,255,255,0.8) 0%, rgba(240,245,255,0.7) 100%);
+}
+
+html[data-app-theme="light"] body.app-ui .dash-metric-low-btn {
+  background: rgba(37, 99, 235, 0.1);
+  color: #1d4ed8;
+  border-color: #93c5fd;
+}
+
+html[data-app-theme="light"] body.app-ui .dash-metric-low-btn:hover:not(:disabled) {
+  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.2);
+  background: #2563eb;
+  color: #ffffff;
+}
+
+html[data-app-theme="light"] body.app-ui .dash-snapshot-stale-banner {
+  color: #92400e;
+  background: rgba(251, 191, 36, 0.15);
+  border-color: rgba(217, 119, 6, 0.35);
+}
+
+html[data-app-theme="light"] body.app-ui .dash-vat-seg {
+  background: rgba(255, 255, 255, 0.95);
+}
+
+html[data-app-theme="light"] body.app-ui .dash-top5-dialog {
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: var(--shadow-md), 0 0 60px rgba(13, 148, 136, 0.08);
+}
+
+html[data-app-theme="light"] body.app-ui .dash-top5-dialog::backdrop {
+  background: rgba(15, 23, 42, 0.45);
+}
+
+html[data-app-theme="light"] body.app-ui .fuel-provider-dialog {
+  background: rgba(255, 255, 255, 0.98);
+}
+
+html[data-app-theme="light"] body.app-ui .fuel-provider-dialog::backdrop {
+  background: rgba(15, 23, 42, 0.45);
+}
+
+html[data-app-theme="light"] body.app-ui .dash-list__item {
+  background: rgba(255, 255, 255, 0.75);
+}
+
+html[data-app-theme="light"] body.app-ui .profile-field input[type="text"],
+html[data-app-theme="light"] body.app-ui .profile-field input[type="email"],
+html[data-app-theme="light"] body.app-ui .profile-field input[type="date"],
+html[data-app-theme="light"] body.app-ui .profile-field input[type="time"],
+html[data-app-theme="light"] body.app-ui .profile-field input[type="number"],
+html[data-app-theme="light"] body.app-ui .profile-field select,
+html[data-app-theme="light"] body.app-ui .profile-field textarea {
+  background: var(--surface);
+  border-color: var(--border);
+  color: var(--text);
+}
+
+html[data-app-theme="light"] body.app-ui .load-schedule-block {
+  background: rgba(255, 255, 255, 0.86);
+  border-color: rgba(15, 23, 42, 0.11);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95);
+}
+
+html[data-app-theme="light"] body.app-ui .load-vehicle-picker {
+  background: rgba(255, 255, 255, 0.86);
+  border-color: rgba(15, 23, 42, 0.11);
+}
+
+html[data-app-theme="light"] body.app-ui .dash-fuelcard-chart__track {
+  background: rgba(15, 23, 42, 0.08);
+}
+
+html[data-app-theme="light"] body.app-ui .dash-fuelcard-chart__fill {
+  background: linear-gradient(90deg, rgba(79, 70, 229, 0.45), rgba(99, 102, 241, 0.85));
+}
+
+html[data-app-theme="light"] body.app-ui .dash-fuelcard-chart__row--you .dash-fuelcard-chart__fill {
+  background: linear-gradient(90deg, rgba(13, 148, 136, 0.55), rgba(45, 212, 191, 0.9));
+}
+
+html[data-app-theme="light"] body.app-ui .dash-fuelcard-chart__row--warn .dash-fuelcard-chart__fill {
+  background: linear-gradient(90deg, rgba(245, 158, 11, 0.58), rgba(251, 191, 36, 0.92));
+}
+
+html[data-app-theme="light"] body.app-ui .dash-fuelcard-chart__row--danger .dash-fuelcard-chart__fill {
+  background: linear-gradient(90deg, rgba(239, 68, 68, 0.62), rgba(248, 113, 113, 0.92));
+}
+
+html[data-app-theme="light"] body.app-ui .dash-list__remove:hover {
+  background: rgba(239, 68, 68, 0.12);
+  color: #dc2626;
+}
+
+html[data-app-theme="light"] body.app-ui .station-kind--supermarket {
+  background: rgba(22, 163, 74, 0.12);
+  color: #15803d;
+}
+
+html[data-app-theme="light"] body.app-ui .station-kind--motorway {
+  background: rgba(79, 70, 229, 0.12);
+  color: #4338ca;
+}
+
+html[data-app-theme="light"] body.app-ui .station-kind--independent {
+  background: rgba(71, 85, 105, 0.1);
+  color: #334155;
+}
+
+html[data-app-theme="light"] body.app-ui .fuel-finder__result {
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+  border-radius: 16px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+html[data-app-theme="light"] body.app-ui .fuel-finder__result:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+html[data-app-theme="light"] body.app-ui .fuel-finder__error {
+  background: rgba(254, 226, 226, 0.7);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(248, 113, 113, 0.45);
+  color: #b91c1c;
+}
+
+html[data-app-theme="light"] body.app-ui .fuel-mode.is-active {
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+
+html[data-app-theme="light"] body.app-ui .fuel-dev-menu__panel {
+  background: rgba(255, 255, 255, 0.98);
+}
+
+html[data-app-theme="light"] body.app-ui .fuel-dev-menu__toggle {
+  border-color: rgba(13, 148, 136, 0.35);
+  background: linear-gradient(145deg, #f8fafc, #e0e7ff);
+  box-shadow: 0 2px 16px rgba(13, 148, 136, 0.12);
+}
+
+html[data-app-theme="light"] body.app-ui .fuel-dev-menu__toggle:hover {
+  background: linear-gradient(145deg, #f1f5f9, #ddd6fe);
+}
+
+html[data-app-theme="light"] body.app-ui .dash-panel__lead code {
+  background: rgba(13, 148, 136, 0.1);
+  border-color: rgba(13, 148, 136, 0.22);
+}
+
+html[data-app-theme="light"] body.app-ui .dash-fuelcard-compare__diff--better {
+  color: #15803d;
+}
+
+html[data-app-theme="light"] body.app-ui .dash-fuelcard-compare__diff--higher {
+  color: #b45309;
+}
+
+html[data-app-theme="light"] body.app-ui .dash-api-ping-result--ok,
+html[data-app-theme="light"] body.app-ui .profile-status--ok {
+  color: #15803d;
+}
+
+html[data-app-theme="light"] body.app-ui .dash-api-ping-result--err,
+html[data-app-theme="light"] body.app-ui .profile-status--err {
+  color: #dc2626;
+}
+
+@media (max-width: 900px) {
+  html[data-app-theme="light"] body.app-ui .app-backdrop.is-visible {
+    background: rgba(15, 23, 42, 0.35);
+  }
+}
