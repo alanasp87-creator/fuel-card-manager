@@ -1,0 +1,991 @@
+<!DOCTYPE html>
+<html lang="en-GB" data-app-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <script>
+      (function () {
+        try {
+          if (localStorage.getItem("fuel_app_theme") === "light") {
+            document.documentElement.setAttribute("data-app-theme", "light");
+          }
+        } catch (e) {}
+      })();
+    </script>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Fuel customer app — UK fuel cards and account tools."
+    />
+    <!-- Optional: only if the page hostname does not match localhost/LAN (see js/api-config.js). Example: content="http://192.168.1.10:8787" -->
+    <meta name="fuel-api-base" content="" />
+    <title>Fuel Snapshot — Fuel</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Oxanium:wght@500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/site.css?v=2" />
+    <link rel="stylesheet" href="css/app.css?v=2" />
+    <link rel="stylesheet" href="css/app-theme-light.css?v=2" />
+  </head>
+  <body class="app-ui">
+    <div class="grain" aria-hidden="true"></div>
+
+    <div class="app-shell">
+      <button
+        type="button"
+        class="app-backdrop"
+        id="app-backdrop"
+        aria-label="Close menu"
+        tabindex="-1"
+      ></button>
+
+      <aside class="app-sidebar" id="app-sidebar" aria-label="Main navigation">
+        <div class="app-sidebar__brand">
+          <a href="app.html">Fuel</a>
+        </div>
+        <nav class="app-nav">
+          <button type="button" class="app-nav__link is-active" data-view="dashboard">
+            <span class="app-nav__icon" aria-hidden="true">◉</span>
+            Fuel Snapshot
+          </button>
+          <a href="fuel-prices-history.html" class="app-nav__link" style="text-decoration: none; display: flex; align-items: center; gap: 0.75rem;">
+            <span class="app-nav__icon" aria-hidden="true">📊</span>
+            Price History
+          </a>
+          <a href="user-price-trend.html" class="app-nav__link" style="text-decoration: none; display: flex; align-items: center; gap: 0.75rem;">
+            <span class="app-nav__icon" aria-hidden="true">📈</span>
+            My Price Trend
+          </a>
+          <a href="fuel-forecast.html" class="app-nav__link" style="text-decoration: none; display: flex; align-items: center; gap: 0.75rem;">
+            <span class="app-nav__icon" aria-hidden="true">🔮</span>
+            Fuel Forecast
+          </a>
+          <button type="button" class="app-nav__link" data-view="loads">
+            <span class="app-nav__icon" aria-hidden="true">⇄</span>
+            Load board
+          </button>
+          <button type="button" class="app-nav__link" data-view="profile">
+            <span class="app-nav__icon" aria-hidden="true">◐</span>
+            Profile
+          </button>
+          <button type="button" class="app-nav__link" data-view="admin" id="nav-admin" hidden>
+            <span class="app-nav__icon" aria-hidden="true">⚙</span>
+            Admin Panel
+          </button>
+        </nav>
+        <div class="app-sidebar__footer">
+          <div class="app-theme-toggle" role="group" aria-labelledby="app-theme-toggle-label">
+            <span id="app-theme-toggle-label" class="app-theme-toggle__label">Appearance</span>
+            <div class="app-theme-toggle__seg">
+              <button
+                type="button"
+                class="app-theme-toggle__btn is-active"
+                data-app-theme-toggle="dark"
+                aria-pressed="true"
+              >
+                Dark
+              </button>
+              <button
+                type="button"
+                class="app-theme-toggle__btn"
+                data-app-theme-toggle="light"
+                aria-pressed="false"
+              >
+                Light
+              </button>
+            </div>
+          </div>
+          <a href="index.html">← Marketing website</a>
+          <a href="login.html" id="sidebar-reauth" class="app-sidebar__secondary" hidden>Switch account</a>
+        </div>
+      </aside>
+
+      <div class="app-main-wrap">
+        <header class="app-topbar">
+          <button
+            type="button"
+            class="app-menu-toggle"
+            aria-label="Open menu"
+            aria-expanded="false"
+            id="app-menu-toggle"
+          >
+            ☰
+          </button>
+          <h1 class="app-page-title" id="app-page-title">Fuel Snapshot</h1>
+          <div class="app-topbar__meta">
+            <span class="app-user-wrap" id="app-user-wrap" hidden>
+              <span class="app-user" id="app-user-label"></span>
+              <span class="app-admin-badge" id="app-admin-badge" hidden>Admin</span>
+            </span>
+            <button type="button" class="app-sign-out btn btn-ghost" id="app-sign-out" hidden>
+              Sign out
+            </button>
+          </div>
+        </header>
+
+        <main class="app-content">
+          <section
+            id="view-dashboard"
+            class="app-view is-active"
+            aria-labelledby="dash-heading"
+          >
+            <h2 id="dash-heading" class="visually-hidden">Fuel Snapshot</h2>
+            <div id="dashboard-root" class="dashboard-root" data-dashboard-mount>
+              <h2 class="dashboard-first">Your fuel card suppliers</h2>
+
+              <section class="dash-panel" aria-labelledby="dash-fuelcards-title">
+                <h3 id="dash-fuelcards-title" class="dash-panel__title">Your fuel cards</h3>
+                <ul id="dash-fuel-cards" class="dash-list dash-list--cards"></ul>
+                <p id="dash-fuelcards-empty" class="dash-empty" hidden>
+                  No suppliers added yet — tap Add fuel card to pick one.
+                </p>
+                <button type="button" class="btn btn-primary dash-form__btn" id="dash-open-fuel-provider">
+                  Add fuel card
+                </button>
+              </section>
+
+              <section class="dash-panel" aria-labelledby="dash-fuel-metrics-title">
+                <h3 id="dash-fuel-metrics-title" class="dash-panel__title">Local fuel snapshot (30 km)</h3>
+                <p class="dash-panel__lead">
+                  Latest stored snapshot stats for your saved local stations by category.
+                </p>
+                <div class="dash-vat-bar">
+                  <span class="dash-vat-bar__label" id="dash-vat-label">VAT</span>
+                  <div class="dash-vat-seg" role="group" aria-labelledby="dash-vat-label">
+                    <button
+                      type="button"
+                      class="dash-vat-seg__btn is-active"
+                      id="dash-fuel-vat-off"
+                      aria-pressed="true"
+                    >
+                      Off
+                    </button>
+                    <button
+                      type="button"
+                      class="dash-vat-seg__btn"
+                      id="dash-fuel-vat-on"
+                      aria-pressed="false"
+                    >
+                      On
+                    </button>
+                  </div>
+                  <span class="dash-vat-bar__hint" id="dash-vat-hint">
+                    Prices ex-VAT (20%).
+                  </span>
+                </div>
+                <p class="dash-metrics__ping-row">
+                  <button
+                    type="button"
+                    class="btn btn-primary dash-api-ping-btn"
+                    id="dash-api-ping-btn"
+                    title="Calls GET /health on your Fuel API — no login, no GOV OAuth"
+                  >
+                    Test API connection
+                  </button>
+                  <span id="dash-api-ping-result" class="dash-api-ping-result" role="status" aria-live="polite"></span>
+                </p>
+                <p id="dash-fuel-metrics-status" class="dash-metrics__status" role="status">
+                  Loading local metrics…
+                </p>
+                <p id="dash-snapshot-stale-banner" class="dash-snapshot-stale-banner" hidden role="status"></p>
+                <p class="dash-metrics__actions">
+                  <button
+                    type="button"
+                    class="btn btn-ghost dash-top5-btn"
+                    id="dash-top5-cheapest-btn"
+                    aria-haspopup="dialog"
+                    aria-controls="dash-top5-cheapest-dialog"
+                    aria-label="Load latest fuel metrics and list the five lowest B7 diesel prices"
+                  >
+                    List
+                  </button>
+                  <span class="dash-top5-btn__hint" id="dash-top5-btn-hint"
+                    >Loads prices from the API, then shows the top 5 lowest prices (30 km)</span>
+                </p>
+                <div id="dash-fuel-metrics-cards" class="dash-metrics">
+                  <article class="dash-metric-card">
+                    <h4>Supermarket</h4>
+                    <p class="dash-metric-card__line">Stations: <strong id="dash-metric-supermarket-count">0</strong></p>
+                    <p class="dash-metric-card__line">Avg: <strong id="dash-metric-supermarket-avg">-</strong></p>
+                    <p class="dash-metric-card__line dash-metric-card__line--low">
+                      Low:
+                      <button
+                        type="button"
+                        class="dash-metric-low-btn"
+                        id="dash-metric-supermarket-low-btn"
+                        data-metric-prefix="supermarket"
+                        data-metric-title="Supermarket"
+                        disabled
+                        aria-label="Show top 5 lowest B7 diesel prices in Supermarket"
+                      >
+                        -
+                      </button>
+                      <span class="dash-metric-low-product" id="dash-metric-supermarket-low-product"></span>
+                    </p>
+                    <p class="dash-metric-card__line">High: <strong id="dash-metric-supermarket-high">-</strong></p>
+                  </article>
+                  <article class="dash-metric-card">
+                    <h4>Motorway</h4>
+                    <p class="dash-metric-card__line">Stations: <strong id="dash-metric-motorway-count">0</strong></p>
+                    <p class="dash-metric-card__line">Avg: <strong id="dash-metric-motorway-avg">-</strong></p>
+                    <p class="dash-metric-card__line dash-metric-card__line--low">
+                      Low:
+                      <button
+                        type="button"
+                        class="dash-metric-low-btn"
+                        id="dash-metric-motorway-low-btn"
+                        data-metric-prefix="motorway"
+                        data-metric-title="Motorway"
+                        disabled
+                        aria-label="Show top 5 lowest B7 diesel prices on Motorway"
+                      >
+                        -
+                      </button>
+                      <span class="dash-metric-low-product" id="dash-metric-motorway-low-product"></span>
+                    </p>
+                    <p class="dash-metric-card__line">High: <strong id="dash-metric-motorway-high">-</strong></p>
+                  </article>
+                  <article class="dash-metric-card">
+                    <h4>Independent</h4>
+                    <p class="dash-metric-card__line">Stations: <strong id="dash-metric-independent-count">0</strong></p>
+                    <p class="dash-metric-card__line">Avg: <strong id="dash-metric-independent-avg">-</strong></p>
+                    <p class="dash-metric-card__line dash-metric-card__line--low">
+                      Low:
+                      <button
+                        type="button"
+                        class="dash-metric-low-btn"
+                        id="dash-metric-independent-low-btn"
+                        data-metric-prefix="independent"
+                        data-metric-title="Independent"
+                        disabled
+                        aria-label="Show top 5 lowest B7 diesel prices at Independent sites"
+                      >
+                        -
+                      </button>
+                      <span class="dash-metric-low-product" id="dash-metric-independent-low-product"></span>
+                    </p>
+                    <p class="dash-metric-card__line">High: <strong id="dash-metric-independent-high">-</strong></p>
+                  </article>
+                  <article class="dash-metric-card dash-metric-card--total">
+                    <h4>Total</h4>
+                    <p class="dash-metric-card__line">Stations: <strong id="dash-metric-total-count">0</strong></p>
+                    <p class="dash-metric-card__line">Avg: <strong id="dash-metric-total-avg">-</strong></p>
+                    <p class="dash-metric-card__line dash-metric-card__line--low">
+                      Low:
+                      <button
+                        type="button"
+                        class="dash-metric-low-btn"
+                        id="dash-metric-total-low-btn"
+                        data-metric-prefix="total"
+                        disabled
+                        aria-label="Show top 5 lowest B7 diesel prices overall"
+                      >
+                        -
+                      </button>
+                      <span class="dash-metric-low-product" id="dash-metric-total-low-product"></span>
+                    </p>
+                    <p class="dash-metric-card__line">High: <strong id="dash-metric-total-high">-</strong></p>
+                  </article>
+                </div>
+              </section>
+
+              <section class="dash-panel" aria-labelledby="dash-national-metrics-title">
+                <h3 id="dash-national-metrics-title" class="dash-panel__title">England snapshot</h3>
+                <p class="dash-panel__lead">
+                  B7 diesel prices across all stations in the GOV.UK snapshot.
+                </p>
+                <p id="dash-national-metrics-status" class="dash-metrics__status" role="status">
+                  Loading national metrics…
+                </p>
+                <p id="dash-national-stale-banner" class="dash-snapshot-stale-banner" hidden role="status"></p>
+                <p class="dash-metrics__actions">
+                  <button
+                    type="button"
+                    class="btn btn-ghost dash-top5-btn"
+                    id="dash-national-top5-btn"
+                    aria-haspopup="dialog"
+                    aria-controls="dash-top5-cheapest-dialog"
+                    aria-label="List the five lowest B7 diesel prices nationally"
+                  >
+                    List
+                  </button>
+                  <span class="dash-top5-btn__hint" id="dash-national-top5-hint"
+                    >Top 5 lowest B7 diesel prices across all of England</span>
+                </p>
+                <div id="dash-national-metrics-cards" class="dash-metrics">
+                  <article class="dash-metric-card">
+                    <h4>Supermarket</h4>
+                    <p class="dash-metric-card__line">Stations: <strong id="dash-national-supermarket-count">0</strong></p>
+                    <p class="dash-metric-card__line">Avg: <strong id="dash-national-supermarket-avg">-</strong></p>
+                    <p class="dash-metric-card__line dash-metric-card__line--low">
+                      Low:
+                      <button
+                        type="button"
+                        class="dash-metric-low-btn"
+                        id="dash-national-supermarket-low-btn"
+                        data-national="1"
+                        data-metric-prefix="supermarket"
+                        data-metric-title="Supermarket"
+                        disabled
+                        aria-label="Show top 5 lowest national B7 diesel prices in Supermarket"
+                      >
+                        -
+                      </button>
+                      <span class="dash-metric-low-product" id="dash-national-supermarket-low-product"></span>
+                    </p>
+                    <p class="dash-metric-card__line">High: <strong id="dash-national-supermarket-high">-</strong></p>
+                  </article>
+                  <article class="dash-metric-card">
+                    <h4>Motorway</h4>
+                    <p class="dash-metric-card__line">Stations: <strong id="dash-national-motorway-count">0</strong></p>
+                    <p class="dash-metric-card__line">Avg: <strong id="dash-national-motorway-avg">-</strong></p>
+                    <p class="dash-metric-card__line dash-metric-card__line--low">
+                      Low:
+                      <button
+                        type="button"
+                        class="dash-metric-low-btn"
+                        id="dash-national-motorway-low-btn"
+                        data-national="1"
+                        data-metric-prefix="motorway"
+                        data-metric-title="Motorway"
+                        disabled
+                        aria-label="Show top 5 lowest national B7 diesel prices on Motorway"
+                      >
+                        -
+                      </button>
+                      <span class="dash-metric-low-product" id="dash-national-motorway-low-product"></span>
+                    </p>
+                    <p class="dash-metric-card__line">High: <strong id="dash-national-motorway-high">-</strong></p>
+                  </article>
+                  <article class="dash-metric-card">
+                    <h4>Independent</h4>
+                    <p class="dash-metric-card__line">Stations: <strong id="dash-national-independent-count">0</strong></p>
+                    <p class="dash-metric-card__line">Avg: <strong id="dash-national-independent-avg">-</strong></p>
+                    <p class="dash-metric-card__line dash-metric-card__line--low">
+                      Low:
+                      <button
+                        type="button"
+                        class="dash-metric-low-btn"
+                        id="dash-national-independent-low-btn"
+                        data-national="1"
+                        data-metric-prefix="independent"
+                        data-metric-title="Independent"
+                        disabled
+                        aria-label="Show top 5 lowest national B7 diesel prices at Independent sites"
+                      >
+                        -
+                      </button>
+                      <span class="dash-metric-low-product" id="dash-national-independent-low-product"></span>
+                    </p>
+                    <p class="dash-metric-card__line">High: <strong id="dash-national-independent-high">-</strong></p>
+                  </article>
+                  <article class="dash-metric-card dash-metric-card--total">
+                    <h4>Total</h4>
+                    <p class="dash-metric-card__line">Stations: <strong id="dash-national-total-count">0</strong></p>
+                    <p class="dash-metric-card__line">Avg: <strong id="dash-national-total-avg">-</strong></p>
+                    <p class="dash-metric-card__line dash-metric-card__line--low">
+                      Low:
+                      <button
+                        type="button"
+                        class="dash-metric-low-btn"
+                        id="dash-national-total-low-btn"
+                        data-national="1"
+                        data-metric-prefix="total"
+                        disabled
+                        aria-label="Show top 5 lowest national B7 diesel prices overall"
+                      >
+                        -
+                      </button>
+                      <span class="dash-metric-low-product" id="dash-national-total-low-product"></span>
+                    </p>
+                    <p class="dash-metric-card__line">High: <strong id="dash-national-total-high">-</strong></p>
+                  </article>
+                </div>
+              </section>
+            </div>
+          </section>
+
+
+          <section id="view-loads" class="app-view" aria-labelledby="loads-heading">
+            <div class="app-panel-card">
+              <h2 id="loads-heading">Haulage load board</h2>
+              <p>
+                Post loads, search what is available, and keep a shortlist of saved loads.
+              </p>
+
+              <div class="load-board-tabs" role="tablist" aria-label="Load board sections">
+                <button
+                  type="button"
+                  class="load-board-tabs__tab is-active"
+                  role="tab"
+                  id="load-tab-post"
+                  aria-selected="true"
+                  aria-controls="load-panel-post"
+                  tabindex="0"
+                  data-load-tab="post"
+                >
+                  Post load
+                </button>
+                <button
+                  type="button"
+                  class="load-board-tabs__tab"
+                  role="tab"
+                  id="load-tab-search"
+                  aria-selected="false"
+                  aria-controls="load-panel-search"
+                  tabindex="-1"
+                  data-load-tab="search"
+                >
+                  Search loads
+                </button>
+                <button
+                  type="button"
+                  class="load-board-tabs__tab"
+                  role="tab"
+                  id="load-tab-saved"
+                  aria-selected="false"
+                  aria-controls="load-panel-saved"
+                  tabindex="-1"
+                  data-load-tab="saved"
+                >
+                  Saved loads
+                </button>
+                <button
+                  type="button"
+                  class="load-board-tabs__tab"
+                  role="tab"
+                  id="load-tab-mine"
+                  aria-selected="false"
+                  aria-controls="load-panel-mine"
+                  tabindex="-1"
+                  data-load-tab="mine"
+                >
+                  My posted loads
+                </button>
+              </div>
+
+              <div id="load-panel-post" class="load-board-panel" role="tabpanel" aria-labelledby="load-tab-post">
+              <form id="load-board-form" class="profile-form" novalidate>
+                <div class="profile-field">
+                  <label for="load-reference-no">Reference no.</label>
+                  <input id="load-reference-no" name="referenceNo" type="text" maxlength="60" />
+                </div>
+                <div class="profile-field">
+                  <label for="load-origin-postcode">Collection Postcode</label>
+                  <input
+                    id="load-origin-postcode"
+                    name="originPostcode"
+                    type="text"
+                    maxlength="12"
+                    autocomplete="postal-code"
+                    placeholder="e.g. B1 1AA"
+                  />
+                  <p class="profile-field__hint" id="load-origin-lookup-status" hidden></p>
+                </div>
+                <div class="profile-field">
+                  <label for="load-destination-postcode">Delivery Postcode</label>
+                  <input
+                    id="load-destination-postcode"
+                    name="destinationPostcode"
+                    type="text"
+                    maxlength="12"
+                    autocomplete="postal-code"
+                    placeholder="e.g. M1 1AE"
+                  />
+                  <p class="profile-field__hint" id="load-destination-lookup-status" hidden></p>
+                </div>
+                <div class="profile-field load-schedule-block__mode">
+                  <label for="load-pickup-schedule-type">Pickup schedule type</label>
+                  <select id="load-pickup-schedule-type" name="pickupScheduleType">
+                    <option value="between" selected>Between date/time</option>
+                    <option value="by">By a certain date/time</option>
+                    <option value="on">By a certain time on one day</option>
+                  </select>
+                </div>
+                <div class="load-schedule-block">
+                <div class="profile-field load-schedule-field" id="pickup-date-from-field">
+                  <label for="load-pickup-date-from">Pickup date (from)</label>
+                  <input id="load-pickup-date-from" name="pickupDateFrom" type="date" />
+                </div>
+                <div class="profile-field load-schedule-field" id="pickup-date-to-field">
+                  <label for="load-pickup-date-to">Pickup date (to)</label>
+                  <input id="load-pickup-date-to" name="pickupDateTo" type="date" />
+                </div>
+                <div class="profile-field load-schedule-field" id="pickup-time-from-field">
+                  <label for="load-pickup-time-from">Pickup window (from)</label>
+                  <input id="load-pickup-time-from" name="pickupTimeFrom" type="time" />
+                </div>
+                <div class="profile-field load-schedule-field" id="pickup-time-to-field">
+                  <label for="load-pickup-time-to">Pickup window (to)</label>
+                  <input id="load-pickup-time-to" name="pickupTimeTo" type="time" />
+                </div>
+                <div class="profile-field load-schedule-field" id="pickup-by-date-field">
+                  <label for="load-pickup-by-date">Pickup by date</label>
+                  <input id="load-pickup-by-date" name="pickupByDate" type="date" />
+                </div>
+                <div class="profile-field load-schedule-field" id="pickup-by-time-field">
+                  <label for="load-pickup-by-time">Pickup by time</label>
+                  <input id="load-pickup-by-time" name="pickupByTime" type="time" />
+                </div>
+                <div class="profile-field load-schedule-field" id="pickup-on-date-field">
+                  <label for="load-pickup-on-date">Pickup on date</label>
+                  <input id="load-pickup-on-date" name="pickupOnDate" type="date" />
+                </div>
+                <div class="profile-field load-schedule-field" id="pickup-on-time-field">
+                  <label for="load-pickup-on-time">Pickup on time</label>
+                  <input id="load-pickup-on-time" name="pickupOnTime" type="time" />
+                </div>
+                </div>
+                <div class="profile-field">
+                  <label>Collection vehicle type</label>
+                  <input id="load-collection-vehicle-type" name="collectionVehicleType" type="hidden" />
+                  <div class="load-vehicle-picker" id="load-vehicle-picker">
+                    <div class="load-vehicle-picker__tabs" role="tablist" aria-label="Vehicle class">
+                      <button type="button" class="load-vehicle-picker__tab is-active" data-vehicle-group="van">Van</button>
+                      <button type="button" class="load-vehicle-picker__tab" data-vehicle-group="hgv">HGV</button>
+                    </div>
+                    <div class="load-vehicle-picker__grid">
+                      <button type="button" class="load-vehicle-option" data-vehicle-group="van" data-vehicle-value="Small van">
+                        <span class="load-vehicle-option__label">Small van</span>
+                      </button>
+                      <button type="button" class="load-vehicle-option" data-vehicle-group="van" data-vehicle-value="Large van / LWB">
+                        <span class="load-vehicle-option__label">Large van / LWB</span>
+                      </button>
+                      <button type="button" class="load-vehicle-option" data-vehicle-group="van" data-vehicle-value="Luton van">
+                        <span class="load-vehicle-option__label">Luton van</span>
+                      </button>
+
+                      <button type="button" class="load-vehicle-option" data-vehicle-group="hgv" data-vehicle-value="7.5t rigid" hidden>
+                        <span class="load-vehicle-option__label">7.5t rigid</span>
+                      </button>
+                      <button type="button" class="load-vehicle-option" data-vehicle-group="hgv" data-vehicle-value="18t rigid" hidden>
+                        <span class="load-vehicle-option__label">18t rigid</span>
+                      </button>
+                      <button type="button" class="load-vehicle-option" data-vehicle-group="hgv" data-vehicle-value="26t rigid" hidden>
+                        <span class="load-vehicle-option__label">26t rigid</span>
+                      </button>
+                      <button type="button" class="load-vehicle-option" data-vehicle-group="hgv" data-vehicle-value="Artic (44t)" hidden>
+                        <span class="load-vehicle-option__label">Artic (44t)</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                <div class="profile-field">
+                  <label for="load-collection-body-type">Body type</label>
+                  <select id="load-collection-body-type" name="collectionBodyType">
+                    <option value="">Select body type</option>
+                    <optgroup label="General">
+                      <option value="Curtain side">Curtain side</option>
+                      <option value="Flatbed / platform">Flatbed / platform</option>
+                      <option value="Box / rigid body">Box / rigid body</option>
+                      <option value="Fridge / refrigerated">Fridge / refrigerated</option>
+                      <option value="Dropside">Dropside</option>
+                      <option value="Tipper">Tipper</option>
+                      <option value="Tanker">Tanker</option>
+                      <option value="Low loader / plant">Low loader / plant</option>
+                      <option value="Walking floor / bulk">Walking floor / bulk</option>
+                    </optgroup>
+                    <optgroup label="Van-style">
+                      <option value="Luton / high cube">Luton / high cube</option>
+                      <option value="Panel van">Panel van</option>
+                    </optgroup>
+                    <option value="Other">Other (describe in notes)</option>
+                  </select>
+                </div>
+                <div class="profile-field">
+                  <label for="load-tail-lift-option">Tail lift</label>
+                  <select id="load-tail-lift-option" name="tailLiftOption">
+                    <option value="none" selected>No tail lift needed</option>
+                    <option value="standard">Standard tail lift</option>
+                    <option value="heavy">Heavy-duty tail lift</option>
+                    <option value="platform">Full platform lift</option>
+                    <option value="pallet_truck">Pallet truck only (no vehicle tail lift)</option>
+                    <option value="tbc">To be confirmed with site</option>
+                    <option value="other">Other (describe in notes)</option>
+                  </select>
+                  <p class="profile-field__hint">Extra tail lift requirements (can combine with the option above)</p>
+                  <div class="profile-field__stacked-checks">
+                    <label class="profile-field__checkbox" for="load-tail-lift-tuck-under">
+                      <input
+                        type="checkbox"
+                        id="load-tail-lift-tuck-under"
+                        name="tailLiftTuckUnder"
+                        value="1"
+                      />
+                      Must be tuck-under tail lift
+                    </label>
+                    <label class="profile-field__checkbox" for="load-tail-lift-handrails">
+                      <input
+                        type="checkbox"
+                        id="load-tail-lift-handrails"
+                        name="tailLiftHandrails"
+                        value="1"
+                      />
+                      Must have handrails
+                    </label>
+                  </div>
+                </div>
+                <div class="profile-field load-schedule-block__mode">
+                  <label for="load-delivery-schedule-type">Delivery schedule type</label>
+                  <select id="load-delivery-schedule-type" name="deliveryScheduleType">
+                    <option value="between" selected>Between date/time</option>
+                    <option value="by">By a certain date/time</option>
+                    <option value="on">By a certain time on one day</option>
+                    <option value="asap">ASAP / Direct</option>
+                  </select>
+                </div>
+                <div class="load-schedule-block">
+                <div class="profile-field load-schedule-field" id="delivery-date-field">
+                  <label for="load-delivery-date">Delivery date</label>
+                  <input id="load-delivery-date" name="deliveryDate" type="date" />
+                </div>
+                <div class="profile-field load-schedule-field" id="delivery-time-from-field">
+                  <label for="load-delivery-time-from">Delivery window (from)</label>
+                  <input id="load-delivery-time-from" name="deliveryTimeFrom" type="time" />
+                </div>
+                <div class="profile-field load-schedule-field" id="delivery-time-to-field">
+                  <label for="load-delivery-time-to">Delivery window (to)</label>
+                  <input id="load-delivery-time-to" name="deliveryTimeTo" type="time" />
+                </div>
+                <div class="profile-field load-schedule-field" id="delivery-by-date-field">
+                  <label for="load-delivery-by-date">Deliver by date</label>
+                  <input id="load-delivery-by-date" name="deliveryByDate" type="date" />
+                </div>
+                <div class="profile-field load-schedule-field" id="delivery-by-time-field">
+                  <label for="load-delivery-by-time">Deliver by time</label>
+                  <input id="load-delivery-by-time" name="deliveryByTime" type="time" />
+                </div>
+                <div class="profile-field load-schedule-field" id="delivery-on-date-field">
+                  <label for="load-delivery-on-date">Deliver on date</label>
+                  <input id="load-delivery-on-date" name="deliveryOnDate" type="date" />
+                </div>
+                <div class="profile-field load-schedule-field" id="delivery-on-time-field">
+                  <label for="load-delivery-on-time">Deliver on time</label>
+                  <input id="load-delivery-on-time" name="deliveryOnTime" type="time" />
+                </div>
+                </div>
+                <div class="profile-field">
+                  <label for="load-type">Load type</label>
+                  <input id="load-type" name="loadType" type="text" maxlength="80" placeholder="e.g. Pallets, steel, refrigerated" />
+                </div>
+                <div class="profile-field">
+                  <label for="load-size">Load size</label>
+                  <select id="load-size" name="loadSize">
+                    <option value="">Select</option>
+                    <option value="Full load">Full load</option>
+                    <option value="Part load">Part load</option>
+                  </select>
+                </div>
+                <div class="profile-field">
+                  <label for="load-weight-kg">Weight (kg)</label>
+                  <input id="load-weight-kg" name="weightKg" type="number" min="0" step="1" />
+                </div>
+                <div class="profile-field">
+                  <label for="load-volume-m3">Volume (m3)</label>
+                  <input id="load-volume-m3" name="volumeM3" type="number" min="0" step="0.01" />
+                </div>
+                <div class="profile-field">
+                  <label for="load-length-m">Length (m)</label>
+                  <input id="load-length-m" name="lengthM" type="number" min="0" step="0.1" />
+                </div>
+                <div class="profile-field">
+                  <label for="load-pallets">Pallets</label>
+                  <input id="load-pallets" name="pallets" type="number" min="0" step="1" />
+                </div>
+                <div class="profile-field">
+                  <label for="load-mileage-miles">Mileage (miles)</label>
+                  <input id="load-mileage-miles" name="mileageMiles" type="number" min="0" step="1" />
+                </div>
+                <div class="profile-field">
+                  <label for="load-pricing-mode">Pricing</label>
+                  <select id="load-pricing-mode" name="pricingMode">
+                    <option value="fixed" selected>Fixed rate</option>
+                    <option value="bids">Accepting bids</option>
+                  </select>
+                </div>
+                <div id="load-rate-fields">
+                  <div class="profile-field">
+                    <label for="load-rate-amount">Rate (ex VAT)</label>
+                    <input id="load-rate-amount" name="rateAmount" type="number" min="0" step="0.01" placeholder="e.g. 450" />
+                  </div>
+                  <div class="profile-field">
+                    <label for="load-currency">Currency</label>
+                    <input id="load-currency" name="currency" type="text" maxlength="8" placeholder="GBP" value="GBP" />
+                  </div>
+                </div>
+                <div class="profile-field">
+                  <label for="load-notes">Notes</label>
+                  <textarea id="load-notes" name="notes" rows="3" maxlength="400" placeholder="Any special handling notes"></textarea>
+                </div>
+                <div class="load-board-form-actions">
+                  <button type="submit" class="btn btn-primary" id="load-board-submit" data-load-submit="post">Post load</button>
+                  <button type="button" class="btn btn-ghost" id="load-board-submit-save-post">Save and post</button>
+                  <button type="button" class="btn btn-ghost" id="load-board-save-draft">Save only for future use</button>
+                </div>
+              </form>
+
+              <p id="load-board-status" class="profile-status" role="status" hidden></p>
+              </div>
+
+              <div id="load-panel-search" class="load-board-panel" role="tabpanel" aria-labelledby="load-tab-search" hidden>
+                <h3 class="load-board-panel__title">Search loads</h3>
+                <p class="profile-meta">Filter by postcode or reference. Results update as you type.</p>
+                <div class="load-board-search-filters profile-form">
+                  <div class="profile-field">
+                    <label for="load-search-collection">Collection postcode</label>
+                    <input id="load-search-collection" type="text" maxlength="12" autocomplete="off" placeholder="e.g. B1" />
+                  </div>
+                  <div class="profile-field">
+                    <label for="load-search-delivery">Delivery postcode</label>
+                    <input id="load-search-delivery" type="text" maxlength="12" autocomplete="off" placeholder="e.g. M1" />
+                  </div>
+                  <div class="profile-field">
+                    <label for="load-search-ref">Reference</label>
+                    <input id="load-search-ref" type="text" maxlength="60" autocomplete="off" placeholder="Optional" />
+                  </div>
+                </div>
+                <p id="load-board-search-status" class="profile-status" role="status" hidden></p>
+                <ul id="load-board-list" class="dash-list dash-list--cards"></ul>
+                <p id="load-board-empty" class="dash-empty" hidden>No loads posted yet.</p>
+                <p id="load-board-search-no-match" class="dash-empty" hidden>No loads match your filters.</p>
+              </div>
+
+              <div id="load-panel-saved" class="load-board-panel" role="tabpanel" aria-labelledby="load-tab-saved" hidden>
+                <h3 class="load-board-panel__title">Saved loads</h3>
+                <p class="profile-meta">
+                  Bookmark loads from <strong>Search loads</strong> (Save load). This is separate from
+                  <strong>Save only for future use</strong> on Post load, which restores your draft there.
+                </p>
+                <ul id="load-board-saved-list" class="dash-list dash-list--cards"></ul>
+                <p id="load-board-saved-empty" class="dash-empty" hidden>No saved loads yet.</p>
+              </div>
+
+              <div id="load-panel-mine" class="load-board-panel" role="tabpanel" aria-labelledby="load-tab-mine" hidden>
+                <h3 class="load-board-panel__title">My posted loads</h3>
+                <p class="profile-meta">Loads posted by your account.</p>
+                <ul id="load-board-mine-list" class="dash-list dash-list--cards"></ul>
+                <p id="load-board-mine-empty" class="dash-empty" hidden>You have not posted any loads yet.</p>
+              </div>
+            </div>
+          </section>
+
+          <section id="view-profile" class="app-view" aria-labelledby="profile-heading">
+            <div class="profile-page app-panel-card">
+              <h2 id="profile-heading">Profile</h2>
+              <p id="profile-status" class="profile-status" role="status" hidden></p>
+              <form id="profile-form" class="profile-form" novalidate>
+                <div class="profile-field">
+                  <label for="profile-name">Name</label>
+                  <input
+                    id="profile-name"
+                    name="name"
+                    type="text"
+                    maxlength="120"
+                    autocomplete="name"
+                  />
+                </div>
+                <div class="profile-field">
+                  <label for="profile-company">Company name</label>
+                  <input
+                    id="profile-company"
+                    name="companyName"
+                    type="text"
+                    maxlength="120"
+                    autocomplete="organization"
+                  />
+                </div>
+                <div class="profile-field">
+                  <label for="profile-postcode">Operation postcode</label>
+                  <input
+                    id="profile-postcode"
+                    name="operationPostcode"
+                    type="text"
+                    maxlength="12"
+                    autocomplete="postal-code"
+                    placeholder="e.g. NN4 6AG"
+                  />
+                  <p class="profile-field__hint">Your main base of operations — used as the default for local fuel searches.</p>
+                </div>
+                <div class="profile-field">
+                  <label for="profile-email">Email</label>
+                  <input
+                    id="profile-email"
+                    type="email"
+                    readonly
+                    class="profile-input--readonly"
+                    aria-readonly="true"
+                  />
+                  <p class="profile-field__hint">Email is tied to your sign-in and cannot be changed here.</p>
+                </div>
+                <p class="profile-meta" id="profile-meta"></p>
+                <button type="submit" class="btn btn-primary">Save changes</button>
+              </form>
+
+              <div class="profile-fuel dash-panel dash-panel--nested" aria-labelledby="profile-fuelcards-heading">
+                <h3 id="profile-fuelcards-heading" class="dash-panel__title">Your fuel cards</h3>
+                <p class="dash-panel__lead">
+                  Same list as on the dashboard — add suppliers, set your B7 ex-VAT price, or remove cards here.
+                </p>
+                <ul id="profile-fuel-cards" class="dash-list dash-list--cards"></ul>
+                <p id="profile-fuelcards-empty" class="dash-empty" hidden>
+                  No suppliers yet — tap Add fuel card to pick one.
+                </p>
+                <button type="button" class="btn btn-primary dash-form__btn" id="profile-open-fuel-provider">
+                  Add fuel card
+                </button>
+              </div>
+
+              <div
+                class="profile-fuel dash-panel dash-panel--nested"
+                aria-labelledby="profile-local-stations-heading"
+              >
+                <h3 id="profile-local-stations-heading" class="dash-panel__title">Your local stations</h3>
+                <p class="dash-panel__lead">
+                  When you <strong>save your profile</strong>, every forecourt within <strong>30 km</strong> of your
+                  operation postcode is saved on the server automatically.
+                </p>
+                <p class="profile-local-toolbar">
+                  <button type="button" class="btn btn-ghost" id="profile-local-refresh-25mi">
+                    Refresh 30 km list
+                  </button>
+                  <span class="profile-local-toolbar__hint">Re-builds server-stored stations from your operation postcode.</span>
+                </p>
+                <p id="profile-local-search-status" class="profile-local-hint" role="status" hidden></p>
+                <div
+                  id="profile-local-kind-filter"
+                  class="station-kind-filter"
+                  role="group"
+                  aria-label="Filter stations by forecourt type"
+                  hidden
+                >
+                  <span class="station-kind-filter__label">Show</span>
+                  <button type="button" class="station-kind-filter__btn is-active" data-station-kind="all">
+                    All
+                  </button>
+                  <button type="button" class="station-kind-filter__btn" data-station-kind="supermarket">
+                    Supermarkets
+                  </button>
+                  <button type="button" class="station-kind-filter__btn" data-station-kind="motorway">
+                    Motorway
+                  </button>
+                  <button type="button" class="station-kind-filter__btn" data-station-kind="independent">
+                    Independent
+                  </button>
+                </div>
+
+                <h4 class="profile-local-subheading">Stations within 30 km</h4>
+                <p class="profile-local-saved-hint">
+                  Use <strong>Show</strong> to filter this list by forecourt type.
+                </p>
+                <ul id="profile-local-stations-list" class="dash-list dash-list--cards profile-local-saved"></ul>
+                <p id="profile-local-stations-empty" class="dash-empty">
+                  No stations yet — enter your operation postcode above and save your profile to load forecourts within
+                  30 km.
+                </p>
+              </div>
+            </div>
+          </section>
+          
+          <section id="view-admin" class="app-view" aria-labelledby="admin-heading">
+            <div class="app-panel-card">
+              <div class="admin-header">
+                <h2 id="admin-heading">Admin Panel — User Management</h2>
+                <button type="button" class="btn btn-ghost" id="admin-refresh-btn">Refresh List</button>
+              </div>
+              <p class="admin-intro">Manage all registered users, view their profiles, and update or delete accounts.</p>
+              
+              <div class="admin-table-wrap">
+                <table class="admin-table" id="admin-user-table">
+                  <thead>
+                    <tr>
+                      <th>Name</th>
+                      <th>Email</th>
+                      <th>Joined</th>
+                      <th>Admin?</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="admin-user-list">
+                    <tr>
+                      <td colspan="5" class="admin-table__empty">Loading users...</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+
+        </main>
+      </div>
+    </div>
+
+    <dialog id="fuel-provider-dialog" class="fuel-provider-dialog">
+      <div class="fuel-provider-dialog__shell">
+        <header class="fuel-provider-dialog__header">
+          <h3 class="fuel-provider-dialog__title" id="fuel-provider-dialog-title">Add supplier</h3>
+          <button
+            type="button"
+            class="fuel-provider-dialog__close"
+            id="fuel-provider-dialog-close"
+            aria-label="Close"
+          >
+            ×
+          </button>
+        </header>
+
+        <div id="fuel-provider-step-list" class="fuel-provider-step">
+          <p class="fuel-provider-dialog__hint">Choose your fuel card supplier</p>
+          <div id="fuel-provider-list" class="fuel-provider-list" role="listbox" aria-label="Suppliers"></div>
+          <button type="button" class="btn btn-ghost fuel-provider-list__other" id="fuel-provider-btn-other">
+            Other supplier…
+          </button>
+        </div>
+
+        <div id="fuel-provider-step-other" class="fuel-provider-step" hidden>
+          <label class="fuel-provider-dialog__label" for="fuel-provider-other-input">Supplier name</label>
+          <input
+            id="fuel-provider-other-input"
+            class="fuel-provider-dialog__input"
+            type="text"
+            maxlength="80"
+            placeholder="e.g. Regional co-op"
+          />
+          <div class="fuel-provider-dialog__actions">
+            <button type="button" class="btn btn-ghost" id="fuel-provider-other-back">Back</button>
+            <button type="button" class="btn btn-primary" id="fuel-provider-other-continue">Add supplier</button>
+          </div>
+        </div>
+      </div>
+    </dialog>
+
+    <dialog id="dash-top5-cheapest-dialog" class="dash-top5-dialog">
+      <div class="dash-top5-dialog__shell">
+        <header class="dash-top5-dialog__header">
+          <h3 class="dash-top5-dialog__title" id="dash-top5-dialog-title">Top 5 lowest prices</h3>
+          <button
+            type="button"
+            class="dash-top5-dialog__close"
+            id="dash-top5-dialog-close"
+            aria-label="Close"
+          >
+            ×
+          </button>
+        </header>
+        <p class="dash-top5-dialog__lead" id="dash-top5-dialog-lead"></p>
+        <ol class="dash-top5-list" id="dash-top5-list"></ol>
+      </div>
+    </dialog>
+
+    <script src="js/api-config.js"></script>
+    <script src="js/auth-client.js"></script>
+    <script src="js/local-fuel-sample.js"></script>
+    <script src="js/dashboard-local-fuel.js"></script>
+    <script src="js/profile-page.js"></script>
+    <script src="js/admin-panel.js"></script>
+    <script src="js/load-board.js"></script>
+    <script src="js/dev-menu.js"></script>
+    <script src="js/app.js" defer></script>
+  </body>
+</html>
